@@ -527,23 +527,40 @@ export default function Windows95Desktop() {
     setIsNotesAppOpen(true)
   }, [])
 
-  const updateNoteTitle = useCallback((id: string, title: string) => {
-    setNotes((prevNotes) =>
-      prevNotes.map((note) => (note.id === id ? { ...note, title } : note))
-    )
-  }, [])
+  const updateNoteTitle = useCallback(
+    (id: string, title: string) => {
+      setNotes((prevNotes) =>
+        prevNotes.map((note) => (note.id === id ? { ...note, title } : note))
+      )
+      setActiveNote((prevActiveNote) =>
+        prevActiveNote && prevActiveNote.id === id ? { ...prevActiveNote, title } : prevActiveNote
+      )
+    },
+    []
+  )
 
-  const updateNoteCategory = useCallback((id: string, category: string) => {
-    setNotes((prevNotes) =>
-      prevNotes.map((note) => (note.id === id ? { ...note, category } : note))
-    )
-  }, [])
+  const updateNoteCategory = useCallback(
+    (id: string, category: string) => {
+      setNotes((prevNotes) =>
+        prevNotes.map((note) => (note.id === id ? { ...note, category } : note))
+      )
+      setActiveNote((prevActiveNote) =>
+        prevActiveNote && prevActiveNote.id === id ? { ...prevActiveNote, category } : prevActiveNote
+      )
+    },
+    []
+  )
 
   const updateNoteContent = useCallback(
     (content: string) => {
       if (activeNote) {
         setNotes((prevNotes) =>
           prevNotes.map((note) => (note.id === activeNote.id ? { ...note, content } : note))
+        )
+        setActiveNote((prevActiveNote) =>
+          prevActiveNote && prevActiveNote.id === activeNote.id
+            ? { ...prevActiveNote, content }
+            : prevActiveNote
         )
       }
     },
@@ -590,11 +607,17 @@ export default function Windows95Desktop() {
     [activeWebsite]
   )
 
+  function stripHtml(html: string): string {
+    const tmp = document.createElement('DIV')
+    tmp.innerHTML = html
+    return tmp.textContent || tmp.innerText || ''
+  }
+
   const filteredNotes = notes.filter(
     (note) =>
       (activeCategory === 'All' || note.category === activeCategory) &&
       (note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchTerm.toLowerCase()))
+        stripHtml(note.content).toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const categories = ['All', ...Array.from(new Set(notes.map((note) => note.category)))]
@@ -610,7 +633,7 @@ export default function Windows95Desktop() {
     })
 
     const mlaHeader = `${name}\n${professor}\n${className}\n${date}\n\n`
-    const mlaContent = `${activeNote.title}\n\n${activeNote.content}`
+    const mlaContent = `${activeNote.title}\n\n${stripHtml(activeNote.content)}`
     const mlaFormattedContent = mlaHeader + mlaContent
 
     const blob = new Blob([mlaFormattedContent], { type: 'text/plain' })
@@ -754,7 +777,7 @@ export default function Windows95Desktop() {
                     }`}
                   >
                     <h3 className="font-bold truncate">{note.title}</h3>
-                    <p className="text-sm truncate">{note.content}</p>
+                    <p className="text-sm truncate">{stripHtml(note.content)}</p>
                     <p className="text-xs text-win95-gray-400">
                       {new Date(note.createdAt).toLocaleDateString()}
                     </p>
@@ -772,11 +795,14 @@ export default function Windows95Desktop() {
                       type="text"
                       value={activeNote.title}
                       onChange={(e) => updateNoteTitle(activeNote.id, e.target.value)}
-                      className="w-full px-2 py-1 bg-white border-2 border-win95-gray-500 focus:outline-none"
+                      className="w-full px-2 py-1 bg-white border-2 border-win95-gray-500 focus:outline-none z-50 relative"
                     />
                   </div>
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <NoteEditor activeNote={activeNote} updateNoteContent={updateNoteContent} />
+                    <NoteEditor
+                      activeNote={activeNote}
+                      updateNoteContent={updateNoteContent}
+                    />
                   </div>
                   <div className="p-2 bg-win95-gray-200 border-t border-win95-gray-400 flex justify-between items-center">
                     <input
