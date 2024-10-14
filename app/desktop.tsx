@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
-import { PlusIcon, SearchIcon, XIcon, MinusIcon, MaximizeIcon, DownloadIcon, Globe, FileText, Folder } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { PlusIcon, SearchIcon, XIcon, MinusIcon, MaximizeIcon, DownloadIcon, Globe, FileText, Folder, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
+import Image from 'next/image'
 
 interface Note {
   id: string
@@ -26,6 +27,7 @@ interface AppSettings {
     professor: string
     class: string
   }
+  catSpeed: number
 }
 
 const Windows95Icon = () => (
@@ -36,6 +38,129 @@ const Windows95Icon = () => (
     <div className="bg-win95-yellow"></div>
   </div>
 )
+
+interface DesktopIconProps {
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}
+
+const DesktopIcon: React.FC<DesktopIconProps> = ({ icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="flex flex-col items-center justify-center p-2 w-20 h-20 hover:bg-white hover:bg-opacity-20"
+  >
+    <div className="w-12 h-12 bg-win95-gray-200 border-win95 flex items-center justify-center mb-1">
+      {icon}
+    </div>
+    <span className="text-xs text-center break-words w-full">{label}</span>
+  </button>
+)
+
+const RetroCat: React.FC<{ speed: number, isPaused: boolean }> = ({ speed, isPaused }) => {
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const [targetPosition, setTargetPosition] = useState({ x: 0, y: 0 })
+  const [isMoving, setIsMoving] = useState(false)
+  const [isSurprised, setIsSurprised] = useState(false)
+  const [direction, setDirection] = useState<'right' | 'left' | 'up' | 'down'>('right')
+  const [walkFrame, setWalkFrame] = useState(1)
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setTargetPosition({ x: e.clientX, y: e.clientY })
+      setIsSurprised(true)
+      setTimeout(() => setIsSurprised(false), 1000)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isMoving && !isPaused) {
+      const timer = setTimeout(() => {
+        setIsMoving(true)
+      }, 1000)
+
+      return () => clearTimeout(timer)
+    }
+  }, [targetPosition, isMoving, isPaused])
+
+  useEffect(() => {
+    if (isMoving && !isPaused) {
+      const moveInterval = setInterval(() => {
+        setPosition(current => {
+          const dx = targetPosition.x - current.x
+          const dy = targetPosition.y - current.y
+          const distance = Math.sqrt(dx * dx + dy * dy)
+
+          if (distance < 5) {
+            setIsMoving(false)
+            return current
+          }
+
+          const vx = dx / distance * speed
+          const vy = dy / distance * speed
+
+          // Update direction
+          if (Math.abs(dx) > Math.abs(dy)) {
+            setDirection(dx > 0 ? 'right' : 'left')
+          } else {
+            setDirection(dy > 0 ? 'down' : 'up')
+          }
+
+          // Update walk frame
+          setWalkFrame(prev => (prev % 3) + 1)
+
+          return {
+            x: current.x + vx,
+            y: current.y + vy
+          }
+        })
+      }, 100)
+
+      return () => clearInterval(moveInterval)
+    }
+  }, [isMoving, targetPosition, speed, isPaused])
+
+  const getCatSprite = () => {
+    if (isSurprised) return '/catsurprised.png'
+    if (!isMoving || isPaused) {
+      if (direction === 'up' || direction === 'down') return '/catwalksouth3.png'
+      return '/cat.png'
+    }
+    if (direction === 'right') return `/catwalk${walkFrame}.png`
+    if (direction === 'left') return `/catwalk${walkFrame}.png`
+    if (direction === 'up' || direction === 'down') return `/catwalksouth${walkFrame}.png`
+    return '/cat.png'
+  }
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        left: position.x,
+        top: position.y,
+        width: 50,
+        height: 50,
+        pointerEvents: 'none',
+        zIndex: 9999,
+        transform: `scaleX(${direction === 'left' ? -1 : 1}) ${direction === 'up' ? 'rotate(180deg)' : ''}`,
+      }}
+    >
+      <Image
+        src={getCatSprite()}
+        alt="Retro Cat"
+        width={50}
+        height={50}
+        priority
+      />
+    </div>
+  )
+}
 
 export default function Windows95Desktop() {
   const [notes, setNotes] = useState<Note[]>([])
@@ -49,6 +174,7 @@ export default function Windows95Desktop() {
   const [activeSettingsTab, setActiveSettingsTab] = useState('General')
   const [isNotesAppOpen, setIsNotesAppOpen] = useState(false)
   const [isWebBrowserOpen, setIsWebBrowserOpen] = useState(false)
+  const [isCatPaused, setIsCatPaused] = useState(false)
   const [appSettings, setAppSettings] = useState<AppSettings>({
     theme: 'light',
     fontSize: 'medium',
@@ -57,8 +183,11 @@ export default function Windows95Desktop() {
       name: '',
       professor: '',
       class: '',
-    }
+    },
+    catSpeed: 5
   })
+
+  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('notes')
@@ -167,6 +296,20 @@ export default function Windows95Desktop() {
     URL.revokeObjectURL(url)
   }
 
+  const handleEditorChange = () => {
+    if (editorRef.current && activeNote) {
+      updateNote({
+        ...activeNote,
+        content: editorRef.current.innerHTML
+      })
+    }
+  }
+
+  const applyFormatting = (command: string, value: string | undefined = undefined) => {
+    document.execCommand(command, false, value)
+    handleEditorChange()
+  }
+
   const SettingsPanel = () => (
     <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] bg-win95-gray-200 border-win95 shadow-win95-container ${
       appSettings.theme === 'dark' ? 'text-white' :
@@ -190,7 +333,7 @@ export default function Windows95Desktop() {
           <XIcon className="w-3 h-3" />
         </button>
       </div>
-      <div className="p-4 grid grid-cols-3 gap-4">
+      <div className="p-4 grid grid-cols-4 gap-4">
         <button
           onClick={() => setActiveSettingsTab('General')}
           className={`p-2 text-center border-win95 ${activeSettingsTab === 'General' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'}`}
@@ -217,6 +360,15 @@ export default function Windows95Desktop() {
             <span className="text-2xl">👤</span>
           </div>
           Account
+        </button>
+        <button
+          onClick={() => setActiveSettingsTab('Cat')}
+          className={`p-2  text-center border-win95 ${activeSettingsTab === 'Cat' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'}`}
+        >
+          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
+            <span className="text-2xl">🐱</span>
+          </div>
+          Cat
         </button>
       </div>
       <div className="p-4">
@@ -283,6 +435,20 @@ export default function Windows95Desktop() {
             />
           </div>
         )}
+        {activeSettingsTab === 'Cat' && (
+          <div>
+            <h3 className="font-bold mb-2">Cat Speed</h3>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={appSettings.catSpeed}
+              onChange={(e) => setAppSettings({...appSettings, catSpeed: parseInt(e.target.value)})}
+              className="w-full"
+            />
+            <span>{appSettings.catSpeed}</span>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -297,32 +463,26 @@ export default function Windows95Desktop() {
     } overflow-hidden`} style={{fontSize: appSettings.fontSize === 'small' ? '14px' : appSettings.fontSize === 'large' ? '18px' : '16px'}}>
       {/* Desktop */}
       <div className="flex-1 p-4 grid grid-cols-6 gap-4 content-start">
-        <button
+        <DesktopIcon
+          icon={<FileText className="w-8 h-8 text-black" />}
+          label="Notes"
           onClick={() => setIsNotesAppOpen(true)}
-          className="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20"
-        >
-          <FileText className="w-12 h-12 mb-2" />
-          <span>Notes</span>
-        </button>
-        <button
+        />
+        <DesktopIcon
+          icon={<Globe className="w-8 h-8 text-black" />}
+          label="Web Browser"
           onClick={() => setIsWebBrowserOpen(true)}
-          className="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20"
-        >
-          <Globe className="w-12 h-12 mb-2" />
-          <span>Web Browser</span>
-        </button>
-        <button
+        />
+        <DesktopIcon
+          icon={<Folder className="w-8 h-8 text-black" />}
+          label="Settings"
           onClick={() => setIsSettingsOpen(true)}
-          className="flex flex-col items-center justify-center p-2 hover:bg-white hover:bg-opacity-20"
-        >
-          <Folder className="w-12 h-12 mb-2" />
-          <span>Settings</span>
-        </button>
+        />
       </div>
 
       {/* Notes App Window */}
       {isNotesAppOpen && (
-        <div className="absolute  top-10 left-10 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
+        <div className="absolute top-10 left-10 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
           <div className={`p-1 flex justify-between items-center ${
             appSettings.theme === 'dark' ? 'bg-win95-gray-500' :
             appSettings.theme === 'blue' ? 'bg-win95-blue-300' :
@@ -396,28 +556,46 @@ export default function Windows95Desktop() {
             <div className="flex-1 flex flex-col bg-win95-gray-200 border-l border-white">
               {activeNote ? (
                 <>
-                  <div className="flex-1 p-1 overflow-hidden flex flex-col">
-                    <div className="bg-white border-win95-inset p-1 mb-1">
-                      <input
-                        type="text"
-                        value={activeNote.title}
-                        onChange={(e) =>
-                          updateNote({ ...activeNote, title: e.target.value })
-                        }
-                        className="w-full px-1 py-0.5 bg-transparent focus:outline-none"
-                      />
-                    </div>
-                    <div className="flex-1 bg-white border-win95-inset p-1 overflow-auto">
-                      <textarea
-                        value={activeNote.content}
-                        onChange={(e) =>
-                          updateNote({ ...activeNote, content: e.target.value })
-                        }
-                        className="w-full h-full px-1 py-0.5 bg-transparent resize-none focus:outline-none"
-                      />
-                    </div>
+                  <div className="bg-win95-gray-200 p-2 border-b border-win95-gray-400">
+                    <input
+                      type="text"
+                      value={activeNote.title}
+                      onChange={(e) =>
+                        updateNote({ ...activeNote, title: e.target.value })
+                      }
+                      className="w-full px-2 py-1 bg-white border-2 border-win95-gray-500 focus:outline-none"
+                    />
                   </div>
-                  <div className="p-1 bg-win95-gray-200 border-t border-win95-gray-400 flex justify-between items-center">
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="bg-win95-gray-200 p-2 flex items-center space-x-2 border-b border-win95-gray-400">
+                      <button onClick={() => applyFormatting('bold')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
+                        <Bold className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => applyFormatting('italic')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
+                        <Italic className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => applyFormatting('underline')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
+                        <Underline className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => applyFormatting('justifyLeft')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
+                        <AlignLeft className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => applyFormatting('justifyCenter')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
+                        <AlignCenter className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => applyFormatting('justifyRight')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
+                        <AlignRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <div
+                      ref={editorRef}
+                      className="flex-1 p-4 bg-white border-2 border-win95-gray-500 overflow-auto"
+                      contentEditable
+                      dangerouslySetInnerHTML={{ __html: activeNote.content }}
+                      onInput={handleEditorChange}
+                    />
+                  </div>
+                  <div className="p-2 bg-win95-gray-200 border-t border-win95-gray-400 flex justify-between items-center">
                     <input
                       type="text"
                       value={activeNote.category}
@@ -425,7 +603,7 @@ export default function Windows95Desktop() {
                         updateNote({ ...activeNote, category: e.target.value })
                       }
                       placeholder="Category"
-                      className="px-1 py-0.5 border-win95-inset bg-white w-40"
+                      className="px-2 py-1 border-2 border-win95-gray-500 bg-white w-40"
                     />
                     <div className="flex">
                       <button
@@ -474,62 +652,28 @@ export default function Windows95Desktop() {
           </div>
           <div className="flex flex-col h-full">
             <div className="p-2 flex items-center">
+              <input
+                type="text"
+                value={activeWebsite?.url || ''}
+                onChange={(e) => activeWebsite && updateWebsite({ ...activeWebsite, url: e.target.value })}
+                className="flex-grow px-2 py-1 border-2 border-win95-gray-500 bg-white mr-2"
+                placeholder="Enter URL"
+              />
               <button
-                onClick={addWebsite}
-                className="py-1 px-2 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset flex items-center justify-center mr-2"
+                onClick={() => activeWebsite && updateWebsite({ ...activeWebsite, url: activeWebsite.url })}
+                className="px-4 py-1 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
               >
-                <PlusIcon className="w-4 h-4 mr-2" />
-                New Website
+                Go
               </button>
-              {activeWebsite && (
-                <>
-                  <input
-                    type="text"
-                    value={activeWebsite.title}
-                    onChange={(e) => updateWebsite({ ...activeWebsite, title: e.target.value })}
-                    className="px-2 py-1 border-2 border-win95-gray-500 bg-white mr-2"
-                    placeholder="Title"
-                  />
-                  <input
-                    type="text"
-                    value={activeWebsite.url}
-                    onChange={(e) => updateWebsite({ ...activeWebsite, url: e.target.value })}
-                    className="px-2 py-1 border-2 border-win95-gray-500 bg-white flex-grow"
-                    placeholder="URL"
-                  />
-                  <button
-                    onClick={() => deleteWebsite(activeWebsite.id)}
-                    className="ml-2 py-1 px-2 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
             </div>
-            <div className="flex-1 flex">
-              <div className="w-64 bg-win95-gray-200 border-r border-win95-gray-400 overflow-y-auto">
-                {websites.map((website) => (
-                  <div
-                    key={website.id}
-                    onClick={() => setActiveWebsite(website)}
-                    className={`p-2 cursor-pointer hover:bg-win95-blue-300 hover:text-white ${
-                      activeWebsite?.id === website.id ? 'bg-win95-blue-300 text-white' : ''
-                    }`}
-                  >
-                    <h3 className="font-bold truncate">{website.title}</h3>
-                    <p className="text-sm truncate">{website.url}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="flex-1 bg-white">
-                {activeWebsite && (
-                  <iframe
-                    src={activeWebsite.url}
-                    className="w-full h-full border-none"
-                    title={activeWebsite.title}
-                  />
-                )}
-              </div>
+            <div className="flex-1 bg-white border-2 border-win95-gray-500">
+              {activeWebsite && (
+                <iframe
+                  src={activeWebsite.url}
+                  className="w-full h-full border-none"
+                  title={activeWebsite.title}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -545,28 +689,30 @@ export default function Windows95Desktop() {
           Start
         </button>
         <div className="flex-1 flex items-center">
-          {isNotesAppOpen && (
-            <button
-              onClick={() => setIsNotesAppOpen(true)}
-              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Notes
-            </button>
-          )}
-          {isWebBrowserOpen && (
-            <button
-              onClick={() => setIsWebBrowserOpen(true)}
-              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
-            >
-              <Globe className="w-4 h-4 mr-2" />
-              Web Browser
-            </button>
-          )}
+          <button
+            onClick={() => setIsNotesAppOpen(true)}
+            className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+          >
+            <FileText className="w-4 h-4 mr-2" />
+            Notes
+          </button>
+          <button
+            onClick={() => setIsWebBrowserOpen(true)}
+            className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+          >
+            <Globe className="w-4 h-4 mr-2" />
+            Web Browser
+          </button>
         </div>
-        <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset">
+        <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset mr-2">
           {new Date().toLocaleTimeString()}
         </div>
+        <button
+          onClick={() => setIsCatPaused(!isCatPaused)}
+          className="px-4 py-1 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          {isCatPaused ? 'Resume Cat' : 'Pause Cat'}
+        </button>
       </div>
 
       {/* Start Menu */}
@@ -596,6 +742,9 @@ export default function Windows95Desktop() {
 
       {/* Settings Panel */}
       {isSettingsOpen && <SettingsPanel />}
+
+      {/* Retro Cat */}
+      <RetroCat speed={appSettings.catSpeed} isPaused={isCatPaused} />
     </div>
   )
 }
