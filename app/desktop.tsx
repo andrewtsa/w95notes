@@ -1,7 +1,21 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
-import { PlusIcon, SearchIcon, XIcon, MinusIcon, MaximizeIcon, DownloadIcon, Globe, FileText, Folder, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight } from 'lucide-react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
+import {
+  PlusIcon,
+  SearchIcon,
+  XIcon,
+  DownloadIcon,
+  Globe,
+  FileText,
+  Folder,
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+} from 'lucide-react'
 import Image from 'next/image'
 
 interface Note {
@@ -57,7 +71,7 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({ icon, label, onClick }) => (
   </button>
 )
 
-const RetroCat: React.FC<{ speed: number, isPaused: boolean }> = ({ speed, isPaused }) => {
+const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPaused }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [targetPosition, setTargetPosition] = useState({ x: 0, y: 0 })
   const [isMoving, setIsMoving] = useState(false)
@@ -92,7 +106,7 @@ const RetroCat: React.FC<{ speed: number, isPaused: boolean }> = ({ speed, isPau
   useEffect(() => {
     if (isMoving && !isPaused) {
       const moveInterval = setInterval(() => {
-        setPosition(current => {
+        setPosition((current) => {
           const dx = targetPosition.x - current.x
           const dy = targetPosition.y - current.y
           const distance = Math.sqrt(dx * dx + dy * dy)
@@ -102,22 +116,20 @@ const RetroCat: React.FC<{ speed: number, isPaused: boolean }> = ({ speed, isPau
             return current
           }
 
-          const vx = dx / distance * speed
-          const vy = dy / distance * speed
+          const vx = (dx / distance) * speed
+          const vy = (dy / distance) * speed
 
-          // Update direction
           if (Math.abs(dx) > Math.abs(dy)) {
             setDirection(dx > 0 ? 'right' : 'left')
           } else {
             setDirection(dy > 0 ? 'down' : 'up')
           }
 
-          // Update walk frame
-          setWalkFrame(prev => (prev % 3) + 1)
+          setWalkFrame((prev) => ((prev % 3) + 1))
 
           return {
             x: current.x + vx,
-            y: current.y + vy
+            y: current.y + vy,
           }
         })
       }, 100)
@@ -148,16 +160,296 @@ const RetroCat: React.FC<{ speed: number, isPaused: boolean }> = ({ speed, isPau
         height: 50,
         pointerEvents: 'none',
         zIndex: 9999,
-        transform: `scaleX(${direction === 'left' ? -1 : 1}) ${direction === 'up' ? 'rotate(180deg)' : ''}`,
+        transform: `scaleX(${direction === 'left' ? -1 : 1}) ${
+          direction === 'up' ? 'rotate(180deg)' : ''
+        }`,
       }}
     >
-      <Image
-        src={getCatSprite()}
-        alt="Retro Cat"
-        width={50}
-        height={50}
-        priority
+      <Image src={getCatSprite()} alt="Retro Cat" width={50} height={50} priority />
+    </div>
+  )
+}
+
+const NoteEditor: React.FC<{
+  activeNote: Note
+  updateNoteContent: (content: string) => void
+}> = ({ activeNote, updateNoteContent }) => {
+  const editorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (editorRef.current) {
+      editorRef.current.innerHTML = activeNote.content
+    }
+  }, [activeNote.id]) // Update only when a different note is selected
+
+  const handleInput = useCallback(() => {
+    if (editorRef.current) {
+      const content = editorRef.current.innerHTML
+      updateNoteContent(content)
+    }
+  }, [updateNoteContent])
+
+  const handleFormatting = useCallback((command: string, value?: string) => {
+    document.execCommand(command, false, value)
+  }, [])
+
+  return (
+    <>
+      <div className="bg-win95-gray-200 p-2 flex items-center space-x-2 border-b border-win95-gray-400">
+        <button
+          onClick={() => handleFormatting('bold')}
+          className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          <Bold className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => handleFormatting('italic')}
+          className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          <Italic className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => handleFormatting('underline')}
+          className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          <Underline className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => handleFormatting('justifyLeft')}
+          className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          <AlignLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => handleFormatting('justifyCenter')}
+          className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          <AlignCenter className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => handleFormatting('justifyRight')}
+          className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
+        >
+          <AlignRight className="w-4 h-4" />
+        </button>
+      </div>
+      <div
+        ref={editorRef}
+        className="flex-1 p-4 bg-white border-2 border-win95-gray-500 overflow-auto"
+        contentEditable
+        onInput={handleInput}
       />
+    </>
+  )
+}
+
+const SettingsPanel: React.FC<{
+  appSettings: AppSettings
+  setAppSettings: React.Dispatch<React.SetStateAction<AppSettings>>
+  activeSettingsTab: string
+  setActiveSettingsTab: React.Dispatch<React.SetStateAction<string>>
+  setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
+}> = ({ appSettings, setAppSettings, activeSettingsTab, setActiveSettingsTab, setIsSettingsOpen }) => {
+  // Use local state for MLA settings to prevent cursor jump
+  const [localMlaSettings, setLocalMlaSettings] = useState(appSettings.mlaSettings)
+
+  useEffect(() => {
+    setLocalMlaSettings(appSettings.mlaSettings)
+  }, [appSettings.mlaSettings])
+
+  const handleMlaSettingsChange = (field: keyof typeof localMlaSettings, value: string) => {
+    setLocalMlaSettings(prev => ({
+      ...prev,
+      [field]: value,
+    }))
+  }
+
+  const saveMlaSettings = () => {
+    setAppSettings(prev => ({
+      ...prev,
+      mlaSettings: localMlaSettings,
+    }))
+  }
+
+  useEffect(() => {
+    saveMlaSettings()
+  }, [localMlaSettings]) // Save when localMlaSettings changes
+
+  return (
+    <div
+      className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] bg-win95-gray-200 border-win95 shadow-win95-container ${
+        appSettings.theme === 'dark'
+          ? 'text-white'
+          : appSettings.theme === 'blue'
+          ? 'text-white'
+          : appSettings.theme === 'green'
+          ? 'text-black'
+          : appSettings.theme === 'pink'
+          ? 'text-black'
+          : 'text-black'
+      }`}
+    >
+      <div
+        className={`p-1 flex justify-between items-center ${
+          appSettings.theme === 'dark'
+            ? 'bg-win95-gray-500'
+            : appSettings.theme === 'blue'
+            ? 'bg-win95-blue-300'
+            : appSettings.theme === 'green'
+            ? 'bg-win95-green'
+            : appSettings.theme === 'pink'
+            ? 'bg-pink-300'
+            : 'bg-win95-blue-300'
+        }`}
+      >
+        <div className="flex items-center">
+          <Windows95Icon />
+          <span className="font-bold text-white">Control Panel</span>
+        </div>
+        <button
+          onClick={() => setIsSettingsOpen(false)}
+          className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
+        >
+          <XIcon className="w-3 h-3" />
+        </button>
+      </div>
+      <div className="p-4 grid grid-cols-4 gap-4">
+        <button
+          onClick={() => setActiveSettingsTab('General')}
+          className={`p-2 text-center border-win95 ${
+            activeSettingsTab === 'General' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'
+          }`}
+        >
+          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
+            <span className="text-2xl">A</span>
+          </div>
+          General
+        </button>
+        <button
+          onClick={() => setActiveSettingsTab('Theme')}
+          className={`p-2 text-center border-win95 ${
+            activeSettingsTab === 'Theme' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'
+          }`}
+        >
+          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
+            <span className="text-2xl">🎨</span>
+          </div>
+          Theme
+        </button>
+        <button
+          onClick={() => setActiveSettingsTab('Account')}
+          className={`p-2 text-center border-win95 ${
+            activeSettingsTab === 'Account' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'
+          }`}
+        >
+          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
+            <span className="text-2xl">👤</span>
+          </div>
+          Account
+        </button>
+        <button
+          onClick={() => setActiveSettingsTab('Cat')}
+          className={`p-2  text-center border-win95 ${
+            activeSettingsTab === 'Cat' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'
+          }`}
+        >
+          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
+            <span className="text-2xl">🐱</span>
+          </div>
+          Cat
+        </button>
+      </div>
+      <div className="p-4">
+        {activeSettingsTab === 'General' && (
+          <div>
+            <h3 className="font-bold mb-2">Font Size</h3>
+            <select
+              value={appSettings.fontSize}
+              onChange={(e) =>
+                setAppSettings({
+                  ...appSettings,
+                  fontSize: e.target.value as 'small' | 'medium' | 'large',
+                })
+              }
+              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
+            >
+              <option value="small">Small</option>
+              <option value="medium">Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+        )}
+        {activeSettingsTab === 'Theme' && (
+          <div>
+            <h3 className="font-bold mb-2">Theme</h3>
+            <select
+              value={appSettings.theme}
+              onChange={(e) =>
+                setAppSettings({
+                  ...appSettings,
+                  theme: e.target.value as 'light' | 'dark' | 'blue' | 'green' | 'pink',
+                })
+              }
+              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
+            >
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+              <option value="blue">Blue</option>
+              <option value="green">Green</option>
+              <option value="pink">Pink</option>
+            </select>
+          </div>
+        )}
+        {activeSettingsTab === 'Account' && (
+          <div>
+            <h3 className="font-bold mb-2">Username</h3>
+            <input
+              type="text"
+              value={appSettings.username}
+              onChange={(e) => setAppSettings({ ...appSettings, username: e.target.value })}
+              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white mb-4"
+            />
+            <h3 className="font-bold mb-2">MLA Settings</h3>
+            <input
+              type="text"
+              placeholder="Name"
+              value={localMlaSettings.name}
+              onChange={(e) => handleMlaSettingsChange('name', e.target.value)}
+              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white mb-2"
+            />
+            <input
+              type="text"
+              placeholder="Professor"
+              value={localMlaSettings.professor}
+              onChange={(e) => handleMlaSettingsChange('professor', e.target.value)}
+              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white mb-2"
+            />
+            <input
+              type="text"
+              placeholder="Class"
+              value={localMlaSettings.class}
+              onChange={(e) => handleMlaSettingsChange('class', e.target.value)}
+              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
+            />
+          </div>
+        )}
+        {activeSettingsTab === 'Cat' && (
+          <div>
+            <h3 className="font-bold mb-2">Cat Speed</h3>
+            <input
+              type="range"
+              min="1"
+              max="10"
+              value={appSettings.catSpeed}
+              onChange={(e) =>
+                setAppSettings({ ...appSettings, catSpeed: parseInt(e.target.value) })
+              }
+              className="w-full"
+            />
+            <span>{appSettings.catSpeed}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -184,10 +476,8 @@ export default function Windows95Desktop() {
       professor: '',
       class: '',
     },
-    catSpeed: 5
+    catSpeed: 5,
   })
-
-  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('notes')
@@ -218,7 +508,7 @@ export default function Windows95Desktop() {
     localStorage.setItem('appSettings', JSON.stringify(appSettings))
   }, [appSettings])
 
-  const addNote = () => {
+  const addNote = useCallback(() => {
     const newNote: Note = {
       id: Date.now().toString(),
       title: 'New Note',
@@ -226,45 +516,70 @@ export default function Windows95Desktop() {
       category: 'Uncategorized',
       createdAt: new Date().toISOString(),
     }
-    setNotes([newNote, ...notes])
+    setNotes((prevNotes) => [newNote, ...prevNotes])
     setActiveNote(newNote)
-  }
+    setIsNotesAppOpen(true)
+  }, [])
 
-  const updateNote = (updatedNote: Note) => {
-    const updatedNotes = notes.map((note) =>
-      note.id === updatedNote.id ? updatedNote : note
+  const updateNoteTitle = useCallback((id: string, title: string) => {
+    setNotes(prevNotes =>
+      prevNotes.map(note =>
+        note.id === id ? { ...note, title } : note
+      )
     )
-    setNotes(updatedNotes)
-    setActiveNote(updatedNote)
-  }
+  }, [])
 
-  const deleteNote = (id: string) => {
-    setNotes(notes.filter((note) => note.id !== id))
-    setActiveNote(null)
-  }
+  const updateNoteCategory = useCallback((id: string, category: string) => {
+    setNotes(prevNotes =>
+      prevNotes.map(note =>
+        note.id === id ? { ...note, category } : note
+      )
+    )
+  }, [])
 
-  const addWebsite = () => {
+  const updateNoteContent = useCallback((content: string) => {
+    if (activeNote) {
+      setNotes(prevNotes =>
+        prevNotes.map(note =>
+          note.id === activeNote.id ? { ...note, content } : note
+        )
+      )
+    }
+  }, [activeNote])
+
+  const deleteNote = useCallback((id: string) => {
+    setNotes(prevNotes => prevNotes.filter(note => note.id !== id))
+    if (activeNote?.id === id) {
+      setActiveNote(null)
+    }
+  }, [activeNote])
+
+  // Websites functions
+  const addWebsite = useCallback(() => {
     const newWebsite: Website = {
       id: Date.now().toString(),
       title: 'New Website',
       url: 'https://',
     }
-    setWebsites([newWebsite, ...websites])
+    setWebsites((prevWebsites) => [newWebsite, ...prevWebsites])
     setActiveWebsite(newWebsite)
-  }
+    setIsWebBrowserOpen(true)
+  }, [])
 
-  const updateWebsite = (updatedWebsite: Website) => {
-    const updatedWebsites = websites.map((website) =>
-      website.id === updatedWebsite.id ? updatedWebsite : website
+  const updateWebsite = useCallback((updatedWebsite: Website) => {
+    setWebsites(prevWebsites =>
+      prevWebsites.map(website =>
+        website.id === updatedWebsite.id ? updatedWebsite : website
+      )
     )
-    setWebsites(updatedWebsites)
-    setActiveWebsite(updatedWebsite)
-  }
+  }, [])
 
-  const deleteWebsite = (id: string) => {
-    setWebsites(websites.filter((website) => website.id !== id))
-    setActiveWebsite(null)
-  }
+  const deleteWebsite = useCallback((id: string) => {
+    setWebsites(prevWebsites => prevWebsites.filter(website => website.id !== id))
+    if (activeWebsite?.id === id) {
+      setActiveWebsite(null)
+    }
+  }, [activeWebsite])
 
   const filteredNotes = notes.filter(
     (note) =>
@@ -279,7 +594,11 @@ export default function Windows95Desktop() {
     if (!activeNote) return
 
     const { name, professor, class: className } = appSettings.mlaSettings
-    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const date = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
 
     const mlaHeader = `${name}\n${professor}\n${className}\n${date}\n\n`
     const mlaContent = `${activeNote.title}\n\n${activeNote.content}`
@@ -296,182 +615,39 @@ export default function Windows95Desktop() {
     URL.revokeObjectURL(url)
   }
 
-  const handleEditorChange = () => {
-    if (editorRef.current && activeNote) {
-      updateNote({
-        ...activeNote,
-        content: editorRef.current.innerHTML
-      })
-    }
-  }
-
-  const applyFormatting = (command: string, value: string | undefined = undefined) => {
-    document.execCommand(command, false, value)
-    handleEditorChange()
-  }
-
-  const SettingsPanel = () => (
-    <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] bg-win95-gray-200 border-win95 shadow-win95-container ${
-      appSettings.theme === 'dark' ? 'text-white' :
-      appSettings.theme === 'blue' ? 'text-white' :
-      appSettings.theme === 'green' ? 'text-black' :
-      appSettings.theme === 'pink' ? 'text-black' :
-      'text-black'
-    }`}>
-      <div className={`p-1 flex justify-between items-center ${
-        appSettings.theme === 'dark' ? 'bg-win95-gray-500' :
-        appSettings.theme === 'blue' ? 'bg-win95-blue-300' :
-        appSettings.theme === 'green' ? 'bg-win95-green' :
-        appSettings.theme === 'pink' ? 'bg-pink-300' :
-        'bg-win95-blue-300'
-      }`}>
-        <div className="flex items-center">
-          <Windows95Icon />
-          <span className="font-bold text-white">Control Panel</span>
-        </div>
-        <button onClick={() => setIsSettingsOpen(false)} className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset">
-          <XIcon className="w-3 h-3" />
-        </button>
-      </div>
-      <div className="p-4 grid grid-cols-4 gap-4">
-        <button
-          onClick={() => setActiveSettingsTab('General')}
-          className={`p-2 text-center border-win95 ${activeSettingsTab === 'General' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'}`}
-        >
-          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
-            <span className="text-2xl">A</span>
-          </div>
-          General
-        </button>
-        <button
-          onClick={() => setActiveSettingsTab('Theme')}
-          className={`p-2 text-center border-win95 ${activeSettingsTab === 'Theme' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'}`}
-        >
-          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
-            <span className="text-2xl">🎨</span>
-          </div>
-          Theme
-        </button>
-        <button
-          onClick={() => setActiveSettingsTab('Account')}
-          className={`p-2 text-center border-win95 ${activeSettingsTab === 'Account' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'}`}
-        >
-          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
-            <span className="text-2xl">👤</span>
-          </div>
-          Account
-        </button>
-        <button
-          onClick={() => setActiveSettingsTab('Cat')}
-          className={`p-2  text-center border-win95 ${activeSettingsTab === 'Cat' ? 'bg-win95-gray-300' : 'bg-win95-gray-200'}`}
-        >
-          <div className="w-12 h-12 mx-auto mb-2 bg-win95-gray-300 border-win95-inset flex items-center justify-center">
-            <span className="text-2xl">🐱</span>
-          </div>
-          Cat
-        </button>
-      </div>
-      <div className="p-4">
-        {activeSettingsTab === 'General' && (
-          <div>
-            <h3 className="font-bold mb-2">Font Size</h3>
-            <select
-              value={appSettings.fontSize}
-              onChange={(e) => setAppSettings({...appSettings, fontSize: e.target.value as 'small' | 'medium' | 'large'})}
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
-            >
-              <option value="small">Small</option>
-              <option value="medium">Medium</option>
-              <option value="large">Large</option>
-            </select>
-          </div>
-        )}
-        {activeSettingsTab === 'Theme' && (
-          <div>
-            <h3 className="font-bold mb-2">Theme</h3>
-            <select
-              value={appSettings.theme}
-              onChange={(e) => setAppSettings({...appSettings, theme: e.target.value as 'light' | 'dark' | 'blue' | 'green' | 'pink'})}
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
-            >
-              <option value="light">Light</option>
-              <option value="dark">Dark</option>
-              <option value="blue">Blue</option>
-              <option value="green">Green</option>
-              <option value="pink">Pink</option>
-            </select>
-          </div>
-        )}
-        {activeSettingsTab === 'Account' && (
-          <div>
-            <h3 className="font-bold mb-2">Username</h3>
-            <input
-              type="text"
-              value={appSettings.username}
-              onChange={(e) => setAppSettings({...appSettings, username: e.target.value})}
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white mb-4"
-            />
-            <h3 className="font-bold mb-2">MLA Settings</h3>
-            <input
-              type="text"
-              placeholder="Name"
-              value={appSettings.mlaSettings.name}
-              onChange={(e) => setAppSettings({...appSettings, mlaSettings: {...appSettings.mlaSettings, name: e.target.value}})}
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white mb-2"
-            />
-            <input
-              type="text"
-              placeholder="Professor"
-              value={appSettings.mlaSettings.professor}
-              onChange={(e) => setAppSettings({...appSettings, mlaSettings: {...appSettings.mlaSettings, professor: e.target.value}})}
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white mb-2"
-            />
-            <input
-              type="text"
-              placeholder="Class"
-              value={appSettings.mlaSettings.class}
-              onChange={(e) => setAppSettings({...appSettings, mlaSettings: {...appSettings.mlaSettings, class: e.target.value}})}
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
-            />
-          </div>
-        )}
-        {activeSettingsTab === 'Cat' && (
-          <div>
-            <h3 className="font-bold mb-2">Cat Speed</h3>
-            <input
-              type="range"
-              min="1"
-              max="10"
-              value={appSettings.catSpeed}
-              onChange={(e) => setAppSettings({...appSettings, catSpeed: parseInt(e.target.value)})}
-              className="w-full"
-            />
-            <span>{appSettings.catSpeed}</span>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
   return (
-    <div className={`flex flex-col h-screen ${
-      appSettings.theme === 'dark' ? 'bg-win95-gray-500 text-white' :
-      appSettings.theme === 'blue' ? 'bg-win95-blue-300 text-white' :
-      appSettings.theme === 'green' ? 'bg-win95-green text-black' :
-      appSettings.theme === 'pink' ? 'bg-pink-300 text-black' :
-      'bg-win95-bg text-black'
-    } overflow-hidden`} style={{fontSize: appSettings.fontSize === 'small' ? '14px' : appSettings.fontSize === 'large' ? '18px' : '16px'}}>
-      {/* Desktop */}
+    <div
+      className={`flex flex-col h-screen ${
+        appSettings.theme === 'dark'
+          ? 'bg-win95-gray-500 text-white'
+          : appSettings.theme === 'blue'
+          ? 'bg-win95-blue-300 text-white'
+          : appSettings.theme === 'green'
+          ? 'bg-win95-green text-black'
+          : appSettings.theme === 'pink'
+          ? 'bg-pink-300 text-black'
+          : 'bg-win95-bg text-black'
+      } overflow-hidden`}
+      style={{
+        fontSize:
+          appSettings.fontSize === 'small'
+            ? '14px'
+            : appSettings.fontSize === 'large'
+            ? '18px'
+            : '16px',
+      }}
+    >
+      {/* Desktop Icons */}
       <div className="flex-1 p-4 grid grid-cols-6 gap-4 content-start">
         <DesktopIcon
           icon={<FileText className="w-8 h-8 text-black" />}
           label="Notes"
-          onClick={() => setIsNotesAppOpen(true)}
+          onClick={addNote}
         />
         <DesktopIcon
           icon={<Globe className="w-8 h-8 text-black" />}
           label="Web Browser"
-          onClick={() => setIsWebBrowserOpen(true)}
+          onClick={addWebsite}
         />
         <DesktopIcon
           icon={<Folder className="w-8 h-8 text-black" />}
@@ -481,20 +657,29 @@ export default function Windows95Desktop() {
       </div>
 
       {/* Notes App Window */}
-      {isNotesAppOpen && (
+      {isNotesAppOpen && activeNote && (
         <div className="absolute top-10 left-10 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
-          <div className={`p-1 flex justify-between items-center ${
-            appSettings.theme === 'dark' ? 'bg-win95-gray-500' :
-            appSettings.theme === 'blue' ? 'bg-win95-blue-300' :
-            appSettings.theme === 'green' ? 'bg-win95-green' :
-            appSettings.theme === 'pink' ? 'bg-pink-300' :
-            'bg-win95-blue-300'
-          }`}>
+          <div
+            className={`p-1 flex justify-between items-center ${
+              appSettings.theme === 'dark'
+                ? 'bg-win95-gray-500'
+                : appSettings.theme === 'blue'
+                ? 'bg-win95-blue-300'
+                : appSettings.theme === 'green'
+                ? 'bg-win95-green'
+                : appSettings.theme === 'pink'
+                ? 'bg-pink-300'
+                : 'bg-win95-blue-300'
+            }`}
+          >
             <div className="flex items-center">
               <Windows95Icon />
               <span className="font-bold text-white">Notes</span>
             </div>
-            <button onClick={() => setIsNotesAppOpen(false)} className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset">
+            <button
+              onClick={() => setIsNotesAppOpen(false)}
+              className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
+            >
               <XIcon className="w-3 h-3" />
             </button>
           </div>
@@ -553,55 +738,28 @@ export default function Windows95Desktop() {
             </div>
 
             {/* Main content */}
-            <div className="flex-1 flex flex-col bg-win95-gray-200 border-l border-white">
+            <div className="flex-1 flex flex-col bg-win95-gray-200 border-l border-white overflow-hidden">
               {activeNote ? (
                 <>
                   <div className="bg-win95-gray-200 p-2 border-b border-win95-gray-400">
                     <input
                       type="text"
                       value={activeNote.title}
-                      onChange={(e) =>
-                        updateNote({ ...activeNote, title: e.target.value })
-                      }
+                      onChange={(e) => updateNoteTitle(activeNote.id, e.target.value)}
                       className="w-full px-2 py-1 bg-white border-2 border-win95-gray-500 focus:outline-none"
                     />
                   </div>
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <div className="bg-win95-gray-200 p-2 flex items-center space-x-2 border-b border-win95-gray-400">
-                      <button onClick={() => applyFormatting('bold')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
-                        <Bold className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => applyFormatting('italic')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
-                        <Italic className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => applyFormatting('underline')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
-                        <Underline className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => applyFormatting('justifyLeft')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
-                        <AlignLeft className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => applyFormatting('justifyCenter')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
-                        <AlignCenter className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => applyFormatting('justifyRight')} className="p-1 bg-win95-gray-200 border-win95 hover:bg-win95-gray-300 active:border-win95-inset">
-                        <AlignRight className="w-4 h-4" />
-                      </button>
-                    </div>
-                    <div
-                      ref={editorRef}
-                      className="flex-1 p-4 bg-white border-2 border-win95-gray-500 overflow-auto"
-                      contentEditable
-                      dangerouslySetInnerHTML={{ __html: activeNote.content }}
-                      onInput={handleEditorChange}
+                    <NoteEditor
+                      activeNote={activeNote}
+                      updateNoteContent={updateNoteContent}
                     />
                   </div>
                   <div className="p-2 bg-win95-gray-200 border-t border-win95-gray-400 flex justify-between items-center">
                     <input
                       type="text"
                       value={activeNote.category}
-                      onChange={(e) =>
-                        updateNote({ ...activeNote, category: e.target.value })
-                      }
+                      onChange={(e) => updateNoteCategory(activeNote.id, e.target.value)}
                       placeholder="Category"
                       className="px-2 py-1 border-2 border-win95-gray-500 bg-white w-40"
                     />
@@ -633,20 +791,29 @@ export default function Windows95Desktop() {
       )}
 
       {/* Web Browser Window */}
-      {isWebBrowserOpen && (
+      {isWebBrowserOpen && activeWebsite && (
         <div className="absolute top-20 left-20 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
-          <div className={`p-1 flex justify-between items-center ${
-            appSettings.theme === 'dark' ? 'bg-win95-gray-500' :
-            appSettings.theme === 'blue' ? 'bg-win95-blue-300' :
-            appSettings.theme === 'green' ? 'bg-win95-green' :
-            appSettings.theme === 'pink' ? 'bg-pink-300' :
-            'bg-win95-blue-300'
-          }`}>
+          <div
+            className={`p-1 flex justify-between items-center ${
+              appSettings.theme === 'dark'
+                ? 'bg-win95-gray-500'
+                : appSettings.theme === 'blue'
+                ? 'bg-win95-blue-300'
+                : appSettings.theme === 'green'
+                ? 'bg-win95-green'
+                : appSettings.theme === 'pink'
+                ? 'bg-pink-300'
+                : 'bg-win95-blue-300'
+            }`}
+          >
             <div className="flex items-center">
               <Windows95Icon />
               <span className="font-bold text-white">Web Browser</span>
             </div>
-            <button onClick={() => setIsWebBrowserOpen(false)} className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset">
+            <button
+              onClick={() => setIsWebBrowserOpen(false)}
+              className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
+            >
               <XIcon className="w-3 h-3" />
             </button>
           </div>
@@ -654,26 +821,28 @@ export default function Windows95Desktop() {
             <div className="p-2 flex items-center">
               <input
                 type="text"
-                value={activeWebsite?.url || ''}
-                onChange={(e) => activeWebsite && updateWebsite({ ...activeWebsite, url: e.target.value })}
+                value={activeWebsite.url}
+                onChange={(e) =>
+                  updateWebsite({ ...activeWebsite, url: e.target.value })
+                }
                 className="flex-grow px-2 py-1 border-2 border-win95-gray-500 bg-white mr-2"
                 placeholder="Enter URL"
               />
               <button
-                onClick={() => activeWebsite && updateWebsite({ ...activeWebsite, url: activeWebsite.url })}
+                onClick={() =>
+                  updateWebsite({ ...activeWebsite, url: activeWebsite.url })
+                }
                 className="px-4 py-1 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
               >
                 Go
               </button>
             </div>
             <div className="flex-1 bg-white border-2 border-win95-gray-500">
-              {activeWebsite && (
-                <iframe
-                  src={activeWebsite.url}
-                  className="w-full h-full border-none"
-                  title={activeWebsite.title}
-                />
-              )}
+              <iframe
+                src={activeWebsite.url}
+                className="w-full h-full border-none"
+                title={activeWebsite.title}
+              />
             </div>
           </div>
         </div>
@@ -689,20 +858,24 @@ export default function Windows95Desktop() {
           Start
         </button>
         <div className="flex-1 flex items-center">
-          <button
-            onClick={() => setIsNotesAppOpen(true)}
-            className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            Notes
-          </button>
-          <button
-            onClick={() => setIsWebBrowserOpen(true)}
-            className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
-          >
-            <Globe className="w-4 h-4 mr-2" />
-            Web Browser
-          </button>
+          {isNotesAppOpen && (
+            <button
+              onClick={() => setIsNotesAppOpen(true)}
+              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Notes
+            </button>
+          )}
+          {isWebBrowserOpen && (
+            <button
+              onClick={() => setIsWebBrowserOpen(true)}
+              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              Web Browser
+            </button>
+          )}
         </div>
         <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset mr-2">
           {new Date().toLocaleTimeString()}
@@ -718,9 +891,7 @@ export default function Windows95Desktop() {
       {/* Start Menu */}
       {isStartMenuOpen && (
         <div className="absolute bottom-10 left-0 w-64 bg-win95-gray-200 border-win95 shadow-lg">
-          <div className="p-2 bg-win95-blue-300 text-white font-bold">
-            Windows 95
-          </div>
+          <div className="p-2 bg-win95-blue-300 text-white font-bold">Windows 95</div>
           <button
             onClick={() => {
               setIsSettingsOpen(true)
@@ -741,7 +912,15 @@ export default function Windows95Desktop() {
       )}
 
       {/* Settings Panel */}
-      {isSettingsOpen && <SettingsPanel />}
+      {isSettingsOpen && (
+        <SettingsPanel
+          appSettings={appSettings}
+          setAppSettings={setAppSettings}
+          activeSettingsTab={activeSettingsTab}
+          setActiveSettingsTab={setActiveSettingsTab}
+          setIsSettingsOpen={setIsSettingsOpen}
+        />
+      )}
 
       {/* Retro Cat */}
       <RetroCat speed={appSettings.catSpeed} isPaused={isCatPaused} />
