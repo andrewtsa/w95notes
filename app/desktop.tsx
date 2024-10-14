@@ -125,7 +125,7 @@ const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPau
             setDirection(dy > 0 ? 'down' : 'up')
           }
 
-          setWalkFrame((prev) => ((prev % 3) + 1))
+          setWalkFrame((prev) => (prev % 3) + 1)
 
           return {
             x: current.x + vx,
@@ -249,7 +249,13 @@ const SettingsPanel: React.FC<{
   activeSettingsTab: string
   setActiveSettingsTab: React.Dispatch<React.SetStateAction<string>>
   setIsSettingsOpen: React.Dispatch<React.SetStateAction<boolean>>
-}> = ({ appSettings, setAppSettings, activeSettingsTab, setActiveSettingsTab, setIsSettingsOpen }) => {
+}> = ({
+  appSettings,
+  setAppSettings,
+  activeSettingsTab,
+  setActiveSettingsTab,
+  setIsSettingsOpen,
+}) => {
   // Use local state for MLA settings to prevent cursor jump
   const [localMlaSettings, setLocalMlaSettings] = useState(appSettings.mlaSettings)
 
@@ -258,14 +264,14 @@ const SettingsPanel: React.FC<{
   }, [appSettings.mlaSettings])
 
   const handleMlaSettingsChange = (field: keyof typeof localMlaSettings, value: string) => {
-    setLocalMlaSettings(prev => ({
+    setLocalMlaSettings((prev) => ({
       ...prev,
       [field]: value,
     }))
   }
 
   const saveMlaSettings = () => {
-    setAppSettings(prev => ({
+    setAppSettings((prev) => ({
       ...prev,
       mlaSettings: localMlaSettings,
     }))
@@ -522,37 +528,37 @@ export default function Windows95Desktop() {
   }, [])
 
   const updateNoteTitle = useCallback((id: string, title: string) => {
-    setNotes(prevNotes =>
-      prevNotes.map(note =>
-        note.id === id ? { ...note, title } : note
-      )
+    setNotes((prevNotes) =>
+      prevNotes.map((note) => (note.id === id ? { ...note, title } : note))
     )
   }, [])
 
   const updateNoteCategory = useCallback((id: string, category: string) => {
-    setNotes(prevNotes =>
-      prevNotes.map(note =>
-        note.id === id ? { ...note, category } : note
-      )
+    setNotes((prevNotes) =>
+      prevNotes.map((note) => (note.id === id ? { ...note, category } : note))
     )
   }, [])
 
-  const updateNoteContent = useCallback((content: string) => {
-    if (activeNote) {
-      setNotes(prevNotes =>
-        prevNotes.map(note =>
-          note.id === activeNote.id ? { ...note, content } : note
+  const updateNoteContent = useCallback(
+    (content: string) => {
+      if (activeNote) {
+        setNotes((prevNotes) =>
+          prevNotes.map((note) => (note.id === activeNote.id ? { ...note, content } : note))
         )
-      )
-    }
-  }, [activeNote])
+      }
+    },
+    [activeNote]
+  )
 
-  const deleteNote = useCallback((id: string) => {
-    setNotes(prevNotes => prevNotes.filter(note => note.id !== id))
-    if (activeNote?.id === id) {
-      setActiveNote(null)
-    }
-  }, [activeNote])
+  const deleteNote = useCallback(
+    (id: string) => {
+      setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id))
+      if (activeNote?.id === id) {
+        setActiveNote(null)
+      }
+    },
+    [activeNote]
+  )
 
   // Websites functions
   const addWebsite = useCallback(() => {
@@ -567,19 +573,22 @@ export default function Windows95Desktop() {
   }, [])
 
   const updateWebsite = useCallback((updatedWebsite: Website) => {
-    setWebsites(prevWebsites =>
-      prevWebsites.map(website =>
+    setWebsites((prevWebsites) =>
+      prevWebsites.map((website) =>
         website.id === updatedWebsite.id ? updatedWebsite : website
       )
     )
   }, [])
 
-  const deleteWebsite = useCallback((id: string) => {
-    setWebsites(prevWebsites => prevWebsites.filter(website => website.id !== id))
-    if (activeWebsite?.id === id) {
-      setActiveWebsite(null)
-    }
-  }, [activeWebsite])
+  const deleteWebsite = useCallback(
+    (id: string) => {
+      setWebsites((prevWebsites) => prevWebsites.filter((website) => website.id !== id))
+      if (activeWebsite?.id === id) {
+        setActiveWebsite(null)
+      }
+    },
+    [activeWebsite]
+  )
 
   const filteredNotes = notes.filter(
     (note) =>
@@ -617,7 +626,7 @@ export default function Windows95Desktop() {
 
   return (
     <div
-      className={`flex flex-col h-screen ${
+      className={`relative flex flex-col h-screen ${
         appSettings.theme === 'dark'
           ? 'bg-win95-gray-500 text-white'
           : appSettings.theme === 'blue'
@@ -637,6 +646,23 @@ export default function Windows95Desktop() {
             : '16px',
       }}
     >
+      {/* Background Text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <h1
+          className="text-4xl font-bold text-center"
+          style={{
+            color:
+              appSettings.theme === 'dark' || appSettings.theme === 'blue'
+                ? '#FFFFFF'
+                : '#000000',
+            textShadow:
+              '2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000',
+          }}
+        >
+          Andrews notes app for notes and shit
+        </h1>
+      </div>
+
       {/* Desktop Icons */}
       <div className="flex-1 p-4 grid grid-cols-6 gap-4 content-start">
         <DesktopIcon
@@ -657,7 +683,7 @@ export default function Windows95Desktop() {
       </div>
 
       {/* Notes App Window */}
-      {isNotesAppOpen && activeNote && (
+      {isNotesAppOpen && (
         <div className="absolute top-10 left-10 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
           <div
             className={`p-1 flex justify-between items-center ${
@@ -750,10 +776,7 @@ export default function Windows95Desktop() {
                     />
                   </div>
                   <div className="flex-1 flex flex-col overflow-hidden">
-                    <NoteEditor
-                      activeNote={activeNote}
-                      updateNoteContent={updateNoteContent}
-                    />
+                    <NoteEditor activeNote={activeNote} updateNoteContent={updateNoteContent} />
                   </div>
                   <div className="p-2 bg-win95-gray-200 border-t border-win95-gray-400 flex justify-between items-center">
                     <input
@@ -822,16 +845,12 @@ export default function Windows95Desktop() {
               <input
                 type="text"
                 value={activeWebsite.url}
-                onChange={(e) =>
-                  updateWebsite({ ...activeWebsite, url: e.target.value })
-                }
+                onChange={(e) => updateWebsite({ ...activeWebsite, url: e.target.value })}
                 className="flex-grow px-2 py-1 border-2 border-win95-gray-500 bg-white mr-2"
                 placeholder="Enter URL"
               />
               <button
-                onClick={() =>
-                  updateWebsite({ ...activeWebsite, url: activeWebsite.url })
-                }
+                onClick={() => updateWebsite({ ...activeWebsite, url: activeWebsite.url })}
                 className="px-4 py-1 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
               >
                 Go
