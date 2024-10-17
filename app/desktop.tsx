@@ -19,7 +19,7 @@ import {
   Gamepad2,
 } from 'lucide-react'
 import Image from 'next/image'
-import PinballGame from './PinballGame' // Import the PinballGame component
+import TetrisGame from './tetris' // Import the PinballGame component
 
 interface Note {
   id: string
@@ -476,7 +476,7 @@ export default function Windows95Desktop() {
   const [isNotesAppOpen, setIsNotesAppOpen] = useState(false)
   const [isWebBrowserOpen, setIsWebBrowserOpen] = useState(false)
   const [isCatPaused, setIsCatPaused] = useState(false)
-  const [isPinballOpen, setIsPinballOpen] = useState(false) // New state for Pinball game
+  const [isTetrisOpen, setIsTetrisOpen] = useState(false) // New state for Tetris game
   const [appSettings, setAppSettings] = useState<AppSettings>({
     theme: 'light',
     fontSize: 'medium',
@@ -708,10 +708,10 @@ export default function Windows95Desktop() {
           label="Settings"
           onClick={() => setIsSettingsOpen(true)}
         />
-        <DesktopIcon
-          icon={<Gamepad2 className="w-8 h-8 text-black" />} // Pinball icon
-          label="Pinball"
-          onClick={() => setIsPinballOpen(true)}
+                <DesktopIcon
+          icon={<Gamepad2 className="w-8 h-8 text-black" />}
+          label="Tetris"
+          onClick={() => setIsTetrisOpen(true)}
         />
       </div>
 
@@ -908,9 +908,9 @@ export default function Windows95Desktop() {
         </div>
       )}
 
-      {/* Pinball Game Window */}
-      {isPinballOpen && (
-        <div className="absolute top-24 left-24 w-[850px] h-[650px] bg-win95-gray-200 border-win95 shadow-win95-container">
+           {/* Tetris Game Window */}
+      {isTetrisOpen && (
+        <div className="absolute top-24 left-24 w-[350px] h-[600px] sm:w-[450px] sm:h-[700px] bg-win95-gray-200 border-win95 shadow-win95-container">
           <div
             className={`p-1 flex justify-between items-center ${
               appSettings.theme === 'dark'
@@ -926,10 +926,10 @@ export default function Windows95Desktop() {
           >
             <div className="flex items-center">
               <Windows95Icon />
-              <span className="font-bold text-white">Pinball</span>
+              <span className="font-bold text-white">Tetris</span>
             </div>
             <button
-              onClick={() => setIsPinballOpen(false)}
+              onClick={() => setIsTetrisOpen(false)}
               className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
             >
               <XIcon className="w-3 h-3" />
@@ -937,13 +937,11 @@ export default function Windows95Desktop() {
           </div>
           <div className="flex flex-col h-full">
             <div className="flex-1 bg-white border-2 border-win95-gray-500 overflow-hidden">
-              <PinballGame />
+              <TetrisGame />
             </div>
           </div>
         </div>
-      )}
-
-      {/* Taskbar */}
+      )}      {/* Taskbar */}
       <div className="h-10 bg-win95-gray-200 border-t-2 border-white flex items-center px-2">
         <button
           onClick={() => setIsStartMenuOpen(!isStartMenuOpen)}
@@ -971,18 +969,18 @@ export default function Windows95Desktop() {
               Web Browser
             </button>
           )}
-          {isPinballOpen && (
+               {isTetrisOpen && (
             <button
-              onClick={() => setIsPinballOpen(true)}
-              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+              onClick={() => setIsTetrisOpen(true)}
+              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center whitespace-nowrap"
             >
               <Gamepad2 className="w-4 h-4 mr-2" />
-              Pinball
+              Tetris
             </button>
-          )}
-        </div>
-        <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset mr-2">
-          {new Date().toLocaleTimeString()}
+          )}  
+               </div>
+        <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset mr-2 whitespace-nowrap">
+          {new Date().toLocaleTimeString()}        
         </div>
         <button
           onClick={() => setIsCatPaused(!isCatPaused)}
