@@ -1,3 +1,4 @@
+// desktop.tsx
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
@@ -15,8 +16,10 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
+  Gamepad2,
 } from 'lucide-react'
 import Image from 'next/image'
+import PinballGame from './PinballGame' // Import the PinballGame component
 
 interface Note {
   id: string
@@ -473,6 +476,7 @@ export default function Windows95Desktop() {
   const [isNotesAppOpen, setIsNotesAppOpen] = useState(false)
   const [isWebBrowserOpen, setIsWebBrowserOpen] = useState(false)
   const [isCatPaused, setIsCatPaused] = useState(false)
+  const [isPinballOpen, setIsPinballOpen] = useState(false) // New state for Pinball game
   const [appSettings, setAppSettings] = useState<AppSettings>({
     theme: 'light',
     fontSize: 'medium',
@@ -595,6 +599,7 @@ export default function Windows95Desktop() {
         website.id === updatedWebsite.id ? updatedWebsite : website
       )
     )
+    setActiveWebsite(updatedWebsite)
   }, [])
 
   const deleteWebsite = useCallback(
@@ -691,17 +696,22 @@ export default function Windows95Desktop() {
         <DesktopIcon
           icon={<FileText className="w-8 h-8 text-black" />}
           label="Notes"
-          onClick={addNote}
+          onClick={() => setIsNotesAppOpen(true)}
         />
         <DesktopIcon
           icon={<Globe className="w-8 h-8 text-black" />}
           label="Web Browser"
-          onClick={addWebsite}
+          onClick={() => setIsWebBrowserOpen(true)}
         />
         <DesktopIcon
           icon={<Folder className="w-8 h-8 text-black" />}
           label="Settings"
           onClick={() => setIsSettingsOpen(true)}
+        />
+        <DesktopIcon
+          icon={<Gamepad2 className="w-8 h-8 text-black" />} // Pinball icon
+          label="Pinball"
+          onClick={() => setIsPinballOpen(true)}
         />
       </div>
 
@@ -771,7 +781,10 @@ export default function Windows95Desktop() {
                 {filteredNotes.map((note) => (
                   <div
                     key={note.id}
-                    onClick={() => setActiveNote(note)}
+                    onClick={() => {
+                      setActiveNote(note)
+                      setIsNotesAppOpen(true)
+                    }}
                     className={`p-2 cursor-pointer hover:bg-win95-blue-300 hover:text-white ${
                       activeNote?.id === note.id ? 'bg-win95-blue-300 text-white' : ''
                     }`}
@@ -871,7 +884,9 @@ export default function Windows95Desktop() {
               <input
                 type="text"
                 value={activeWebsite.url}
-                onChange={(e) => updateWebsite({ ...activeWebsite, url: e.target.value })}
+                onChange={(e) =>
+                  updateWebsite({ ...activeWebsite, url: e.target.value })
+                }
                 className="flex-grow px-2 py-1 border-2 border-win95-gray-500 bg-white mr-2"
                 placeholder="Enter URL"
               />
@@ -888,6 +903,41 @@ export default function Windows95Desktop() {
                 className="w-full h-full border-none"
                 title={activeWebsite.title}
               />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pinball Game Window */}
+      {isPinballOpen && (
+        <div className="absolute top-24 left-24 w-[850px] h-[650px] bg-win95-gray-200 border-win95 shadow-win95-container">
+          <div
+            className={`p-1 flex justify-between items-center ${
+              appSettings.theme === 'dark'
+                ? 'bg-win95-gray-500'
+                : appSettings.theme === 'blue'
+                ? 'bg-win95-blue-300'
+                : appSettings.theme === 'green'
+                ? 'bg-win95-green'
+                : appSettings.theme === 'pink'
+                ? 'bg-pink-300'
+                : 'bg-win95-blue-300'
+            }`}
+          >
+            <div className="flex items-center">
+              <Windows95Icon />
+              <span className="font-bold text-white">Pinball</span>
+            </div>
+            <button
+              onClick={() => setIsPinballOpen(false)}
+              className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
+            >
+              <XIcon className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="flex flex-col h-full">
+            <div className="flex-1 bg-white border-2 border-win95-gray-500 overflow-hidden">
+              <PinballGame />
             </div>
           </div>
         </div>
@@ -919,6 +969,15 @@ export default function Windows95Desktop() {
             >
               <Globe className="w-4 h-4 mr-2" />
               Web Browser
+            </button>
+          )}
+          {isPinballOpen && (
+            <button
+              onClick={() => setIsPinballOpen(true)}
+              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+            >
+              <Gamepad2 className="w-4 h-4 mr-2" />
+              Pinball
             </button>
           )}
         </div>
