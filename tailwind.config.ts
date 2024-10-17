@@ -49,7 +49,7 @@ const config: Config = {
       const newUtilities = {
         '.border-win95': {
           'border-style': 'solid',
-          'border-width': '2px',
+          'border-width': '5px',
           'border-bottom-color': '#535353',
           'border-right-color': '#535353',
           'border-top-color': '#fff',

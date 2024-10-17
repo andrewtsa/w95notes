@@ -73,7 +73,7 @@ const DesktopIcon: React.FC<DesktopIconProps> = ({ icon, label, onClick }) => (
     <span className="text-xs text-center break-words w-full">{label}</span>
   </button>
 )
-
+/* Retro Cat Component */
 const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPaused }) => {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [targetPosition, setTargetPosition] = useState({ x: 0, y: 0 })
@@ -168,7 +168,7 @@ const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPau
         }`,
       }}
     >
-      <Image src={getCatSprite()} alt="Retro Cat" width={50} height={50} priority />
+      <Image src={getCatSprite()} alt="/cat.png" width={50} height={50} priority />
     </div>
   )
 }
