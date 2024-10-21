@@ -2,6 +2,7 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import Draggable from 'react'
 import {
   PlusIcon,
   SearchIcon,
@@ -20,6 +21,9 @@ import {
 } from 'lucide-react'
 import Image from 'next/image'
 import TetrisGame from './tetris' // Import the PinballGame component
+import PlannerApp from './planner'
+import { Calendar } from 'lucide-react'
+
 
 interface Note {
   id: string
@@ -86,6 +90,7 @@ const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPau
     const handleMouseMove = (e: MouseEvent) => {
       setTargetPosition({ x: e.clientX, y: e.clientY })
       setIsSurprised(true)
+      setIsMoving(false) // Stop moving when surprised
       setTimeout(() => setIsSurprised(false), 1000)
     }
 
@@ -97,17 +102,17 @@ const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPau
   }, [])
 
   useEffect(() => {
-    if (!isMoving && !isPaused) {
+    if (!isMoving && !isPaused && !isSurprised) {
       const timer = setTimeout(() => {
         setIsMoving(true)
       }, 1000)
 
       return () => clearTimeout(timer)
     }
-  }, [targetPosition, isMoving, isPaused])
+  }, [targetPosition, isMoving, isPaused, isSurprised])
 
   useEffect(() => {
-    if (isMoving && !isPaused) {
+    if (isMoving && !isPaused && !isSurprised) {
       const moveInterval = setInterval(() => {
         setPosition((current) => {
           const dx = targetPosition.x - current.x
@@ -139,7 +144,7 @@ const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPau
 
       return () => clearInterval(moveInterval)
     }
-  }, [isMoving, targetPosition, speed, isPaused])
+  }, [isMoving, targetPosition, speed, isPaused, isSurprised])
 
   const getCatSprite = () => {
     if (isSurprised) return '/catsurprised.png'
@@ -168,7 +173,7 @@ const RetroCat: React.FC<{ speed: number; isPaused: boolean }> = ({ speed, isPau
         }`,
       }}
     >
-      <Image src={getCatSprite()} alt="/cat.png" width={50} height={50} priority />
+      <Image src={getCatSprite()} alt="cat.png" width={50} height={50} priority />
     </div>
   )
 }
@@ -476,6 +481,7 @@ export default function Windows95Desktop() {
   const [isNotesAppOpen, setIsNotesAppOpen] = useState(false)
   const [isWebBrowserOpen, setIsWebBrowserOpen] = useState(false)
   const [isCatPaused, setIsCatPaused] = useState(false)
+  const [isPlannerOpen, setIsPlannerOpen] = useState(false)
   const [isTetrisOpen, setIsTetrisOpen] = useState(false) // New state for Tetris game
   const [appSettings, setAppSettings] = useState<AppSettings>({
     theme: 'light',
@@ -713,6 +719,11 @@ export default function Windows95Desktop() {
           label="Tetris"
           onClick={() => setIsTetrisOpen(true)}
         />
+          <DesktopIcon
+        icon={<Calendar className="w-8 h-8 text-black" />}
+        label="Planner"
+        onClick={() => setIsPlannerOpen(true)}
+      />
       </div>
 
       {/* Notes App Window */}
@@ -796,9 +807,10 @@ export default function Windows95Desktop() {
                     </p>
                   </div>
                 ))}
+
               </div>
             </div>
-
+  
             {/* Main content */}
             <div className="flex-1 flex flex-col bg-win95-gray-200 border-l border-white overflow-hidden">
               {activeNote ? (
@@ -852,6 +864,13 @@ export default function Windows95Desktop() {
         </div>
       )}
 
+
+      {/* Planner App Window */}
+      {isPlannerOpen && (
+        <div className="absolute top-28 left-28 w-3/4 h-3/4">
+          <PlannerApp onClose={() => setIsPlannerOpen(false)} />
+        </div>
+      )}
       {/* Web Browser Window */}
       {isWebBrowserOpen && activeWebsite && (
         <div className="absolute top-20 left-20 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
@@ -978,6 +997,15 @@ export default function Windows95Desktop() {
               Tetris
             </button>
           )}  
+            {isPlannerOpen && (
+            <button
+              onClick={() => setIsPlannerOpen(true)}
+              className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+            >
+              <Calendar className="w-4 h-4 mr-2" />
+              Planner
+            </button>
+          )}
                </div>
         <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset mr-2 whitespace-nowrap">
           {new Date().toLocaleTimeString()}        
