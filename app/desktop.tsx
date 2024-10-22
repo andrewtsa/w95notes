@@ -24,6 +24,10 @@ import TetrisGame from './tetris' // Import the PinballGame component
 import PlannerApp from './planner'
 import { Calendar } from 'lucide-react'
 
+import {  ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react'
+interface BrowserProps {
+  onClose: () => void
+}
 
 interface Note {
   id: string
@@ -66,6 +70,126 @@ interface DesktopIconProps {
   onClick: () => void
 }
 
+export function Browser({ onClose }: BrowserProps) {
+  const [url, setUrl] = useState('https://example.com')
+  const [isLoading, setIsLoading] = useState(false)
+  const [history, setHistory] = useState<string[]>([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
+  const iframeRef = useRef<HTMLIFrameElement>(null)
+
+  const handleNavigate = (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    if (iframeRef.current) {
+      // Ensure the URL is valid and starts with http or https
+      const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `http://${url}`;
+      iframeRef.current.src = validUrl; // Set the iframe source to the valid URL
+      setHistory(prev => [...prev.slice(0, historyIndex + 1), validUrl]);
+      setHistoryIndex(prev => prev + 1);
+    }
+  }
+
+  const handleBack = () => {
+    if (historyIndex > 0) {
+      setHistoryIndex(prev => prev - 1)
+      setUrl(history[historyIndex - 1])
+      setIsLoading(true)
+      if (iframeRef.current) {
+        iframeRef.current.src = history[historyIndex - 1]
+      }
+    }
+  }
+
+  const handleForward = () => {
+    if (historyIndex < history.length - 1) {
+      setHistoryIndex(prev => prev + 1)
+      setUrl(history[historyIndex + 1])
+      setIsLoading(true)
+      if (iframeRef.current) {
+        iframeRef.current.src = history[historyIndex + 1]
+      }
+    }
+  }
+
+  const handleRefresh = () => {
+    setIsLoading(true)
+    if (iframeRef.current) {
+      iframeRef.current.src = url
+    }
+  }
+
+  const handleIframeLoad = () => {
+    setIsLoading(false)
+  }
+
+  return (
+    <div className="flex flex-col h-full bg-win95-gray-200 border-win95 shadow-win95-container">
+      <div className="p-1 flex justify-between items-center bg-win95-blue-300">
+        <div className="flex items-center">
+          <Globe className="w-4 h-4 mr-2 text-white" />
+          <span className="font-bold text-white">Web Browser</span>
+        </div>
+        <button
+          onClick={onClose}
+          className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
+        >
+          <XIcon className="w-3 h-3" />
+        </button>
+      </div>
+      <div className="flex items-center p-2 bg-win95-gray-200 border-b border-win95-gray-400">
+        <button
+          onClick={handleBack}
+          disabled={historyIndex <= 0}
+          className="px-2 py-1 bg-win95-gray-200 border-win95 active:border-win95-inset mr-1 disabled:opacity-50"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleForward}
+          disabled={historyIndex >= history.length - 1}
+          className="px-2 py-1 bg-win95-gray-200 border-win95 active:border-win95-inset mr-1 disabled:opacity-50"
+        >
+          <ArrowRight className="w-4 h-4" />
+        </button>
+        <button
+          onClick={handleRefresh}
+          className="px-2 py-1 bg-win95-gray-200 border-win95 active:border-win95-inset mr-2"
+        >
+          <RotateCcw className="w-4 h-4" />
+        </button>
+        <form onSubmit={handleNavigate} className="flex-grow flex">
+          <input
+            type="text"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            className="flex-grow px-2 py-1 border-2 border-win95-gray-500 bg-white"
+            placeholder="Enter URL" // Add a placeholder for clarity
+          />
+          <button
+            type="submit"
+            className="px-4 py-1 bg-win95-gray-200 border-win95 active:border-win95-inset ml-2"
+          >
+            Go
+          </button>
+        </form>
+      </div>
+      <div className="flex-grow relative">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-white bg-opacity-75 z-10">
+            <div className="text-win95-gray-600">Loading...</div>
+          </div>
+        )}
+        <iframe
+          ref={iframeRef}
+          src={url}
+          className="w-full h-full border-none"
+          title="Web Browser"
+          onLoad={handleIframeLoad}
+        />
+      </div>
+    </div>
+  )
+}
 const DesktopIcon: React.FC<DesktopIconProps> = ({ icon, label, onClick }) => (
   <button
     onClick={onClick}
@@ -707,7 +831,10 @@ export default function Windows95Desktop() {
         <DesktopIcon
           icon={<Globe className="w-8 h-8 text-black" />}
           label="Web Browser"
-          onClick={() => setIsWebBrowserOpen(true)}
+          onClick={() => { 
+            setIsWebBrowserOpen(true); // Open the web browser
+            setActiveWebsite({ id: '1', title: 'New Website', url: 'https://example.com' }); // Set a default website
+          }}
         />
         <DesktopIcon
           icon={<Folder className="w-8 h-8 text-black" />}
@@ -1057,3 +1184,9 @@ export default function Windows95Desktop() {
     </div>
   )
 }
+
+
+
+
+
+
