@@ -16,6 +16,7 @@ body {
       rgb(var(--background-end-rgb))
     )
     rgb(var(--background-start-rgb));
+  font-family: 'MS Sans Serif', Arial, sans-serif;
 }
 
 @font-face {
@@ -45,4 +46,158 @@ body {
   border-right-color: #fff;
   border-top-color: #535353;
   border-left-color: #535353;
+}
+
+/* Blade Runner Theme Styles */
+.bg-blade-runner {
+  background-color: #1a1a1a; /* Dark background */
+  color: #00ffcc; /* Neon text color */
+  font-family: 'Courier New', Courier, monospace; /* Monospaced font for terminal look */
+}
+
+.text-blade-runner {
+  color: #00ffcc; /* Neon text color */
+}
+
+/* Additional styles for terminal effect */
+input, button {
+  background-color: #333; /* Dark background for inputs and buttons */
+  color: #00ffcc; /* Neon text color */
+  border: 1px solid #00ffcc; /* Neon border color */
+}
+
+input:focus, button:focus {
+  outline: none; /* Remove default outline */
+  border-color: #ff00ff; /* Change border color on focus */
+}
+
+button:hover {
+  background-color: #444; /* Slightly lighter background on hover */
+}
+
+/* Windows XP Theme Styles */
+.xp-theme {
+  background-color: #a0c4ff; /* Light blue background */
+  color: #000; /* Black text */
+}
+
+.xp-theme .text-xp {
+  color: #000; /* Black text */
+}
+
+.xp-theme .border-xp {
+  border: 2px solid #0078d7; /* Blue border */
+}
+
+.xp-theme .button-xp {
+  background-color: #0078d7; /* Blue button */
+  color: #fff; /* White text */
+  border-radius: 3px; /* Rounded corners */
+  padding: 5px 10px; /* Padding for the button */
+  font-weight: bold; /* Bold text */
+}
+
+.xp-theme .button-xp:hover {
+  background-color: #005a9e; /* Darker blue on hover */
+}
+
+.xp-theme .header-xp {
+  background-color: #0078d7; /* Header background */
+  color: #fff; /* Header text color */
+}
+
+.xp-theme .input-xp {
+  border: 1px solid #0078d7; /* Input border color */
+  background-color: #fff; /* Input background */
+  color: #000; /* Input text color */
+}
+
+/* Other themes (example) */
+.bg-win95 {
+  background-color: #c0c0c0; /* Win95 gray */
+  color: #000; /* Black text */
+}
+
+.text-win95 {
+  color: #000; /* Black text */
+}
+
+/* Add other theme styles here... */
+
+/* Pink Theme Styles */
+.pink-theme {
+  background-color: #ffb3d9; /* Light pastel pink background */
+  color: #000; /* Black text */
+}
+
+.pink-theme .text-pink {
+  color: #000; /* Black text */
+}
+
+.pink-theme .border-pink {
+  border: 2px solid #ff1493; /* Darker pink border */
+}
+
+.pink-theme .button-pink {
+  background-color: #ff1493; /* Darker pink button */
+  color: #fff; /* White text */
+}
+
+.pink-theme .button-pink:hover {
+  background-color: #db3d8a; /* Slightly darker pink on hover */
+}
+
+.pink-theme .header-pink {
+  background-color: #ff1493; /* Header background */
+  color: #fff; /* Header text color */
+}
+
+.pink-theme .input-pink {
+  border: 1px solid #ff1493; /* Input border color */
+  background-color: #fff; /* Input background */
+  color: #000; /* Input text color */
+}
+
+/* Windows 95 Taskbar Styles */
+.win95-taskbar {
+  background-color: #c0c0c0; /* Win95 gray */
+  border-top: 2px solid #fff; /* White border on top */
+  height: 40px; /* Height of the taskbar */
+  display: flex; /* Flexbox for alignment */
+  align-items: center; /* Center items vertically */
+  padding: 0 10px; /* Padding for the taskbar */
+}
+
+/* New text shadow class */
+.text-shadow {
+  text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* Windows 7 Theme Styles */
+.win7-theme {
+  background: linear-gradient(to bottom right, #1e5799, #7db9e8);
+  color: #fff;
+}
+
+.win7-window {
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.win7-button {
+  background: linear-gradient(to bottom, #f6f6f6, #e0e0e0);
+  border: 1px solid #999;
+  border-radius: 3px;
+  color: #000;
+  padding: 5px 10px;
+}
+
+.win7-button:hover {
+  background: linear-gradient(to bottom, #e0e0e0, #f6f6f6);
+}
+
+.win7-input {
+  border: 1px solid #999;
+  border-radius: 3px;
+  padding: 5px;
 }

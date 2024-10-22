@@ -7,6 +7,7 @@ import {
   PlusIcon,
   SearchIcon,
   XIcon,
+  BookOpen,
   DownloadIcon,
   Globe,
   FileText,
@@ -23,6 +24,8 @@ import Image from 'next/image'
 import TetrisGame from './tetris' // Import the PinballGame component
 import PlannerApp from './planner'
 import { Calendar } from 'lucide-react'
+import Library from './components/books/library'
+
 
 import {  ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react'
 interface BrowserProps {
@@ -44,15 +47,16 @@ interface Website {
 }
 
 interface AppSettings {
-  theme: 'light' | 'dark' | 'blue' | 'green' | 'pink'
-  fontSize: 'small' | 'medium' | 'large'
-  username: string
+  theme: 'light' | 'dark' | 'blue' | 'green' | 'pink' | 'blade-runner' | 'xp'; // Existing themes
+  backgroundImage: string; // New property for background image
+  fontSize: 'small' | 'medium' | 'large';
+  username: string;
   mlaSettings: {
-    name: string
-    professor: string
-    class: string
-  }
-  catSpeed: number
+    name: string;
+    professor: string;
+    class: string;
+  };
+  catSpeed: number;
 }
 
 const Windows95Icon = () => (
@@ -99,6 +103,7 @@ export function Browser({ onClose }: BrowserProps) {
       }
     }
   }
+const [isLibraryOpen, setIsLibraryOpen] = useState(false)
 
   const handleForward = () => {
     if (historyIndex < history.length - 1) {
@@ -121,6 +126,7 @@ export function Browser({ onClose }: BrowserProps) {
   const handleIframeLoad = () => {
     setIsLoading(false)
   }
+
 
   return (
     <div className="flex flex-col h-full bg-win95-gray-200 border-win95 shadow-win95-container">
@@ -415,17 +421,7 @@ const SettingsPanel: React.FC<{
 
   return (
     <div
-      className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] bg-win95-gray-200 border-win95 shadow-win95-container ${
-        appSettings.theme === 'dark'
-          ? 'text-white'
-          : appSettings.theme === 'blue'
-          ? 'text-white'
-          : appSettings.theme === 'green'
-          ? 'text-black'
-          : appSettings.theme === 'pink'
-          ? 'text-black'
-          : 'text-black'
-      }`}
+      className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] ${appSettings.theme === 'xp' ? 'bg-blue-100 border-2 border-blue-500 rounded-lg' : 'bg-win95-gray-200 border-win95'} shadow-win95-container`}
     >
       <div
         className={`p-1 flex justify-between items-center ${
@@ -525,16 +521,18 @@ const SettingsPanel: React.FC<{
               onChange={(e) =>
                 setAppSettings({
                   ...appSettings,
-                  theme: e.target.value as 'light' | 'dark' | 'blue' | 'green' | 'pink',
+                  theme: e.target.value as 'light' | 'dark' | 'blue' | 'green' | 'pink' | 'blade-runner' | 'xp',
                 })
               }
-              className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
+              className="w-full px-2 py-1 input-xp"
             >
               <option value="light">Light</option>
               <option value="dark">Dark</option>
               <option value="blue">Blue</option>
               <option value="green">Green</option>
               <option value="pink">Pink</option>
+              <option value="blade-runner">Blade Runner</option>
+              <option value="xp">Windows XP</option> {/* Added XP option */}
             </select>
           </div>
         )}
@@ -588,11 +586,28 @@ const SettingsPanel: React.FC<{
           </div>
         )}
       </div>
+      {/* Background Image Selection */}
+      <div className="mt-4">
+        <h3 className="font-bold mb-2">Background Image</h3>
+        <input
+          type="text"
+          value={appSettings.backgroundImage}
+          onChange={(e) =>
+            setAppSettings({
+              ...appSettings,
+              backgroundImage: e.target.value,
+            })
+          }
+          className="w-full px-2 py-1 border-2 border-win95-gray-500 bg-white"
+          placeholder="Enter background image URL"
+        />
+        <p className="text-sm text-gray-500">Default: /win7bg.jpg</p>
+      </div>
     </div>
   )
 }
 
-export default function Windows95Desktop() {
+export default function WindowsXPDesktop() {
   const [notes, setNotes] = useState<Note[]>([])
   const [websites, setWebsites] = useState<Website[]>([])
   const [activeNote, setActiveNote] = useState<Note | null>(null)
@@ -605,10 +620,12 @@ export default function Windows95Desktop() {
   const [isNotesAppOpen, setIsNotesAppOpen] = useState(false)
   const [isWebBrowserOpen, setIsWebBrowserOpen] = useState(false)
   const [isCatPaused, setIsCatPaused] = useState(false)
+  const [isLibraryOpen, setIsLibraryOpen] = useState(false)
   const [isPlannerOpen, setIsPlannerOpen] = useState(false)
   const [isTetrisOpen, setIsTetrisOpen] = useState(false) // New state for Tetris game
   const [appSettings, setAppSettings] = useState<AppSettings>({
-    theme: 'light',
+    theme: 'xp', // Set default theme to XP
+    backgroundImage: '/win7bg.jpg', // Default background image
     fontSize: 'medium',
     username: 'User',
     mlaSettings: {
@@ -782,27 +799,24 @@ export default function Windows95Desktop() {
     URL.revokeObjectURL(url)
   }
 
+  const getThemeClasses = () => {
+    switch (appSettings.theme) {
+      case 'xp':
+        return 'xp-theme'; // Apply XP theme classes
+      case 'dark':
+        return 'bg-win95-gray-500 text-white'; // Example for dark theme
+      case 'blue':
+        return 'bg-win95-blue-300 text-white'; // Example for blue theme
+      // Add other themes here...
+      default:
+        return 'bg-win95-bg text-black'; // Default theme
+    }
+  };
+
   return (
     <div
-      className={`relative flex flex-col h-screen ${
-        appSettings.theme === 'dark'
-          ? 'bg-win95-gray-500 text-white'
-          : appSettings.theme === 'blue'
-          ? 'bg-win95-blue-300 text-white'
-          : appSettings.theme === 'green'
-          ? 'bg-win95-green text-black'
-          : appSettings.theme === 'pink'
-          ? 'bg-pink-300 text-black'
-          : 'bg-win95-bg text-black'
-      } overflow-hidden`}
-      style={{
-        fontSize:
-          appSettings.fontSize === 'small'
-            ? '14px'
-            : appSettings.fontSize === 'large'
-            ? '18px'
-            : '16px',
-      }}
+      className={`relative flex flex-col h-screen ${getThemeClasses()} overflow-hidden`}
+      style={{ backgroundImage: `url(${appSettings.backgroundImage})`, backgroundSize: 'cover' }} // Apply background image
     >
       {/* Background Text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -851,6 +865,11 @@ export default function Windows95Desktop() {
         label="Planner"
         onClick={() => setIsPlannerOpen(true)}
       />
+        <DesktopIcon
+  icon={<BookOpen className="w-8 h-8 text-black" />}
+  label="Library"
+  onClick={() => setIsLibraryOpen(true)}
+/>
       </div>
 
       {/* Notes App Window */}
@@ -988,6 +1007,7 @@ export default function Windows95Desktop() {
               )}
             </div>
           </div>
+        
         </div>
       )}
 
@@ -1087,11 +1107,16 @@ export default function Windows95Desktop() {
             </div>
           </div>
         </div>
-      )}      {/* Taskbar */}
-      <div className="h-10 bg-win95-gray-200 border-t-2 border-white flex items-center px-2">
+      )}      
+      {/* Library Window */} 
+      {isLibraryOpen && (
+  <Library onClose={() => setIsLibraryOpen(false)} />
+)}
+      {/* Taskbar */}
+      <div className={`h-12 ${appSettings.theme === 'xp' ? 'xp-theme' : appSettings.theme === 'pink' ? 'pink-theme' : 'bg-win95'} win95-taskbar flex items-center px-2`}>
         <button
           onClick={() => setIsStartMenuOpen(!isStartMenuOpen)}
-          className="px-4 py-1 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset flex items-center"
+          className={`px-4 py-1 ${appSettings.theme === 'xp' ? 'button-xp' : 'button-win95'} flex items-center`}
         >
           <Windows95Icon />
           Start
@@ -1133,6 +1158,15 @@ export default function Windows95Desktop() {
               Planner
             </button>
           )}
+          {isLibraryOpen && (
+  <button
+    onClick={() => setIsLibraryOpen(true)}
+    className="px-4 py-1 bg-win95-gray-300 text-black border-win95-inset mr-2 flex items-center"
+  >
+    <BookOpen className="w-4 h-4 mr-2" />
+    Library
+  </button>
+)}
                </div>
         <div className="px-2 py-1 bg-win95-gray-300 border-win95-inset mr-2 whitespace-nowrap">
           {new Date().toLocaleTimeString()}        
@@ -1184,6 +1218,17 @@ export default function Windows95Desktop() {
     </div>
   )
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
