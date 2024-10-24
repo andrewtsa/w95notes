@@ -18,8 +18,9 @@ interface LibraryProps {
 export default function Library({ onClose }: LibraryProps) {
   const [books, setBooks] = useState<Book[]>([
     { id: '1', title: 'Little Seagull Handbook', category: 'Reference', pdfUrl: '/littleseagullhandbook.pdf' },
-    { id: '2', title: 'Introduction to React', category: 'Programming', pdfUrl: '/placeholder.pdf' },
-    { id: '3', title: 'Windows 95 User Guide', category: 'Technology', pdfUrl: '/placeholder.pdf' },
+    { id: '3', title: 'The Maine Journal of Education (1871)', category: 'Reference', pdfUrl: '/mainejournalofeducation1871.pdf' },
+    { id: '4', title: 'Introduction to React', category: 'Programming', pdfUrl: '/placeholder.pdf' },
+    { id: '5', title: 'Windows 95 User Guide', category: 'Technology', pdfUrl: '/placeholder.pdf' },
   ])
   const [selectedBook, setSelectedBook] = useState<Book | null>(null)
   const [searchTerm, setSearchTerm] = useState('')

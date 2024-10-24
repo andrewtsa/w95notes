@@ -47,7 +47,7 @@ interface Website {
 }
 
 interface AppSettings {
-  theme: 'light' | 'dark' | 'blue' | 'green' | 'pink' | 'blade-runner' | 'xp'; // Existing themes
+  theme: 'light' | 'dark' | 'blue' | 'green' | 'pink' | 'blade-runner' | 'xp' | 'windows7'; // Existing themes
   backgroundImage: string; // New property for background image
   fontSize: 'small' | 'medium' | 'large';
   username: string;
@@ -85,7 +85,6 @@ export function Browser({ onClose }: BrowserProps) {
     e.preventDefault()
     setIsLoading(true)
     if (iframeRef.current) {
-      // Ensure the URL is valid and starts with http or https
       const validUrl = url.startsWith('http://') || url.startsWith('https://') ? url : `http://${url}`;
       iframeRef.current.src = validUrl; // Set the iframe source to the valid URL
       setHistory(prev => [...prev.slice(0, historyIndex + 1), validUrl]);
@@ -521,7 +520,7 @@ const SettingsPanel: React.FC<{
               onChange={(e) =>
                 setAppSettings({
                   ...appSettings,
-                  theme: e.target.value as 'light' | 'dark' | 'blue' | 'green' | 'pink' | 'blade-runner' | 'xp',
+                  theme: e.target.value as 'light' | 'dark' | 'blue' | 'green' | 'pink' | 'blade-runner' | 'xp' | 'windows7',
                 })
               }
               className="w-full px-2 py-1 input-xp"
@@ -533,6 +532,7 @@ const SettingsPanel: React.FC<{
               <option value="pink">Pink</option>
               <option value="blade-runner">Blade Runner</option>
               <option value="xp">Windows XP</option> {/* Added XP option */}
+              <option value="windows7">Windows 7</option> {/* Added Windows 7 option */}
             </select>
           </div>
         )}
@@ -624,7 +624,7 @@ export default function WindowsXPDesktop() {
   const [isPlannerOpen, setIsPlannerOpen] = useState(false)
   const [isTetrisOpen, setIsTetrisOpen] = useState(false) // New state for Tetris game
   const [appSettings, setAppSettings] = useState<AppSettings>({
-    theme: 'xp', // Set default theme to XP
+    theme: 'windows7', // Change default theme to Windows 7
     backgroundImage: '/win7bg.jpg', // Default background image
     fontSize: 'medium',
     username: 'User',
@@ -801,6 +801,8 @@ export default function WindowsXPDesktop() {
 
   const getThemeClasses = () => {
     switch (appSettings.theme) {
+      case 'windows7':
+        return 'windows7-theme'; // Apply Windows 7 theme classes
       case 'xp':
         return 'xp-theme'; // Apply XP theme classes
       case 'dark':
@@ -820,17 +822,7 @@ export default function WindowsXPDesktop() {
     >
       {/* Background Text */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <h1
-          className="text-4xl font-bold text-center"
-          style={{
-            color:
-              appSettings.theme === 'dark' || appSettings.theme === 'blue'
-                ? '#FFFFFF'
-                : '#000000',
-            textShadow:
-              '2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000',
-          }}
-        >
+        <h1 className="text-4xl font-bold text-center" style={{ color: appSettings.theme === 'dark' ? '#FFFFFF' : '#000000' }}>
           Andrews notes app for notes and shit
         </h1>
       </div>
@@ -1020,28 +1012,13 @@ export default function WindowsXPDesktop() {
       )}
       {/* Web Browser Window */}
       {isWebBrowserOpen && activeWebsite && (
-        <div className="absolute top-20 left-20 w-3/4 h-3/4 bg-win95-gray-200 border-win95 shadow-win95-container">
-          <div
-            className={`p-1 flex justify-between items-center ${
-              appSettings.theme === 'dark'
-                ? 'bg-win95-gray-500'
-                : appSettings.theme === 'blue'
-                ? 'bg-win95-blue-300'
-                : appSettings.theme === 'green'
-                ? 'bg-win95-green'
-                : appSettings.theme === 'pink'
-                ? 'bg-pink-300'
-                : 'bg-win95-blue-300'
-            }`}
-          >
+        <div className="absolute top-20 left-20 w-3/4 h-3/4 bg-win7-gray-200 border-win7 shadow-win7-container">
+          <div className={`p-1 flex justify-between items-center ${appSettings.theme === 'windows7' ? 'bg-win7-blue' : ''}`}>
             <div className="flex items-center">
               <Windows95Icon />
               <span className="font-bold text-white">Web Browser</span>
             </div>
-            <button
-              onClick={() => setIsWebBrowserOpen(false)}
-              className="px-2 py-0.5 bg-win95-gray-200 border-win95 active:border-win95-inset"
-            >
+            <button onClick={() => setIsWebBrowserOpen(false)} className="px-2 py-0.5 bg-win7-gray-200 border-win7 active:border-win7-inset">
               <XIcon className="w-3 h-3" />
             </button>
           </div>
@@ -1050,20 +1027,15 @@ export default function WindowsXPDesktop() {
               <input
                 type="text"
                 value={activeWebsite.url}
-                onChange={(e) =>
-                  updateWebsite({ ...activeWebsite, url: e.target.value })
-                }
-                className="flex-grow px-2 py-1 border-2 border-win95-gray-500 bg-white mr-2"
+                onChange={(e) => updateWebsite({ ...activeWebsite, url: e.target.value })}
+                className="flex-grow px-2 py-1 border-2 border-win7-gray-500 bg-white mr-2"
                 placeholder="Enter URL"
               />
-              <button
-                onClick={() => updateWebsite({ ...activeWebsite, url: activeWebsite.url })}
-                className="px-4 py-1 bg-win95-gray-200 text-black border-win95 hover:bg-win95-gray-300 active:border-win95-inset"
-              >
+              <button onClick={() => updateWebsite({ ...activeWebsite, url: activeWebsite.url })} className="px-4 py-1 bg-win7-gray-200 text-black border-win7 hover:bg-win7-gray-300 active:border-win7-inset">
                 Go
               </button>
             </div>
-            <div className="flex-1 bg-white border-2 border-win95-gray-500">
+            <div className="flex-1 bg-white border-2 border-win7-gray-500">
               <iframe
                 src={activeWebsite.url}
                 className="w-full h-full border-none"
@@ -1218,6 +1190,7 @@ export default function WindowsXPDesktop() {
     </div>
   )
 }
+
 
 
 
